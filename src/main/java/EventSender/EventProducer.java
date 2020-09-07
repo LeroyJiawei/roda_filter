@@ -50,12 +50,16 @@ public class EventProducer {
 			System.err.println("properties file read failed");
 			e.printStackTrace();
 		}
-		String KafkaServer = properties.getProperty("KafkaServer");
+		String KafkaServer = properties.getProperty("SourceKafkaServer");
 		String EventFile = properties.getProperty("EventFile");
 
         //configure producer props
 		Properties Props =  new Properties();
-		Props.put("bootstrap.servers", KafkaServer);
+		try{
+			Props.put("bootstrap.servers", KafkaServer);
+		} catch (Throwable e){
+			e.printStackTrace();
+		}
 		Props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		Props.put("value.serializer", ValueSerde.EventValSerde.class.getName());
 		//creat producer
@@ -122,7 +126,8 @@ public class EventProducer {
 			try {
 				producer.send(record);
 
-				Thread.sleep(frequencies[fre_idx]);
+//				Thread.sleep(frequencies[fre_idx]);
+				Thread.sleep(100);
 				System.out.println("event "+j+" with frequency "+frequencies[fre_idx]);
 
 			} catch (Exception e) {

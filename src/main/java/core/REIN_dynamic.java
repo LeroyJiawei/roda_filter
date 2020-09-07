@@ -72,7 +72,7 @@ public class REIN_dynamic {
         }
         try{
             config_filename = args[0];
-            ATTRIBUTE_NUM = Integer.parseInt(args[1]);
+            ATTRIBUTE_NUM = Integer.parseInt(args[2]);
             BucketList = new Bucket[STOCK_NUM][ATTRIBUTE_NUM][2][PART];
         } catch (Throwable e){
             System.err.println("Usage: REIN_dynamic -matchconfigfile -maxattr");
@@ -458,9 +458,9 @@ public class REIN_dynamic {
         });
 
         final Topology index_topology = index_builder.build();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "stream_docker_index");
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "stream_rein_index");
         final KafkaStreams stream_index = new KafkaStreams(index_topology, props);
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "stream_docker_matcher");
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "stream_rein_matcher");
         final Topology matcher_topology = match_builder.build();
         final KafkaStreams stream_matcher = new KafkaStreams(matcher_topology, props);
         final CountDownLatch latch = new CountDownLatch(1);

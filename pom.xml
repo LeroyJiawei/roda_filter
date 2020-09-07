@@ -3,11 +3,11 @@
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cn.edu.cn.phsih</groupId>
-<!--		<artifactId>PhSIH-createSub</artifactId>-->
+<!--		<artifactId>Roda-createSub</artifactId>-->
 <!--		<artifactId>PhSIH-createEvent</artifactId>-->
-<!--		<artifactId>PhSIH-subProducer</artifactId>-->
-<!--		<artifactId>PhSIH-eventProducer</artifactId>-->
-		<artifactId>PhSIH-reinDynamic</artifactId>
+<!--		<artifactId>Roda-opSubProducer</artifactId>-->
+<!--		<artifactId>Roda-eventProducer</artifactId>-->
+		<artifactId>Roda-OpIndex</artifactId>
 <!--		<artifactId>PhSIH-rein</artifactId>-->
 <!--		<artifactId>PhSIH-infoFeedBack</artifactId>-->
 <!--		<artifactId>PhSIH-original-rein-dyn</artifactId>-->
@@ -80,10 +80,10 @@
 					<archive>
 						<manifest>
 							<!-- 主函数的入口 -->
-							<mainClass>core.DaPF_REIN</mainClass>
+							<mainClass>core.OpIndex</mainClass>
 <!--							<mainClass>EventSender.EventProducer</mainClass>-->
-<!--							<mainClass>Client.InfoFeedBack</mainClass>-->
-<!--							<mainClass>Client.SubProducer</mainClass>-->
+<!--							<mainClass>Client.creatSub</mainClass>-->
+<!--							<mainClass>Client.opSubProducer</mainClass>-->
 							<!-- 打包时 MANIFEST.MF文件不记录的时间戳版本 -->
 							<useUniqueVersions>false</useUniqueVersions>
 							<addClasspath>true</addClasspath>

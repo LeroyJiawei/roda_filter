@@ -60,8 +60,9 @@ public class creatSub {
         boolean[] a = new boolean[MaxAttriNum];
 //        String[] name = { "Client1","Client2","Client3" };
         /** subscriber set **/
-        String[] name = new String[100000];
-        for(int jkl=0; jkl < 100000; jkl++)
+        int clientsNum = 1000;
+        String[] name = new String[clientsNum];
+        for(int jkl=0; jkl < clientsNum; jkl++)
             name[jkl] = "Client"+jkl;
 
         int attribute_num, stock_id;
@@ -72,7 +73,7 @@ public class creatSub {
             attribute_num = r.nextInt(10) + 1;
             SubscribeVal sVal;
             sVal = new SubscribeVal(attribute_num);
-            sVal.SubId = name[r.nextInt(100000)];
+            sVal.SubId = name[r.nextInt(clientsNum)];
             sVal.StockId = stock_id;
 
             for(int x = 0; x < MaxAttriNum; x++)a[x] = false;

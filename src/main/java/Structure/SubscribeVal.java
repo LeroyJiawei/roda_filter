@@ -9,6 +9,8 @@ public class SubscribeVal {
 	public int AttributeNum;
 	public int Pivot_Attri_Id;
 	public ArrayList<Val> subVals;
+	/** attention */
+	public long generateTime;
 
 	public class Val{
 		public int attributeId;
