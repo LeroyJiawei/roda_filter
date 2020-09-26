@@ -14,11 +14,18 @@ public class ValueSerde {
         public SubscribeSerde() { super(new JsonSerializer<>(), new JsonDeserializer<>(SubscribeVal.class)); }
     }
 
-    static public final class StringEventMatchSerde extends JsonSerializer<EventStringMatchResult>{}
     static public final class EventValSerde extends JsonSerializer<EventVal>{}
     static public final class EventValDeserde extends JsonDeserializer<EventVal>{
     	public EventValDeserde() { super(EventVal.class); }
     }
+
+    static public final class EventStringMatchResultSerde extends JsonSerializer<EventStringMatchResult>{}
+    static public final class EventStringMatchResultDeserde extends JsonDeserializer<EventStringMatchResult>{
+        public EventStringMatchResultDeserde() { super(EventStringMatchResult.class); }
+    }
+
+
+
     static public final class  SubValSerde extends  JsonSerializer<SubscribeVal>{}
     static  public  final class SubValDeserde extends JsonDeserializer<SubscribeVal>{
         public  SubValDeserde(){ super(SubscribeVal.class); }

@@ -13,6 +13,7 @@ import java.util.Properties;
 import java.util.concurrent.*;
 import org.apache.log4j.*;
 import utils.MatchSendStruct;
+import utils.InfluxdbUtil;
 import org.apache.commons.lang.StringUtils;
 
 
@@ -45,6 +46,7 @@ public class OpIndex {
     private static final ConNum[] conNum = new ConNum[STOCK_NUM];
     private static final Bucket[][] ThreadBucket = new Bucket[STOCK_NUM][MAX_THREAD_NUM];
 
+    private static InfluxdbUtil influx;
 
     // main
     public static void main(String[] args) {
@@ -108,8 +110,12 @@ public class OpIndex {
         Properties ProducerProps =  new Properties();
         ProducerProps.put("bootstrap.servers", SinkKafkaServer);
         ProducerProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        ProducerProps.put("value.serializer", ValueSerde.StringEventMatchSerde.class.getName());
+        ProducerProps.put("value.serializer", ValueSerde.EventStringMatchResultSerde.class.getName());
         KafkaProducer<String, EventStringMatchResult> RodaSender = new KafkaProducer<>(ProducerProps);
+
+        // influxdb config
+        String influx_filename = properties.getProperty("InfluxdbConfigFile");
+        influx = InfluxdbUtil.setUp(influx_filename, "matchTime","matcherState");
 
         //initialize indexLists
         for(int j = 0; j < STOCK_NUM; j++){
@@ -248,15 +254,15 @@ public class OpIndex {
             conNum[stock_id].ConSumNum++;
             conNum[stock_id].AttriConNum[pivotId]++;
 
-            logger.info(String.format("total:%d, Client Name:%s, Client Num Id:%d, " +
-                            "Sub Stock Id:%d, Attribute Num:%d, apply-time=%d",
-                    conNum[stock_id].ConSumNum,subId,sub_num_id,
-                    stock_id,attributeNum,System.currentTimeMillis()-v.generateTime));
+//            logger.info(String.format("total:%d, Client Name:%s, Client Num Id:%d, " +
+//                            "Sub Stock Id:%d, Attribute Num:%d, apply-time=%d",
+//                    conNum[stock_id].ConSumNum,subId,sub_num_id,
+//                    stock_id,attributeNum,System.currentTimeMillis()-v.generateTime));
 
-//            if(conNum[stock_id].ConSumNum % 10000 == 0){
-//                logger.info(String.format("total:%d, Client Name:%s, Client Num Id:%d, Sub Stock Id:%d, Attribute Num:%d",
-//                        conNum[stock_id].ConSumNum,subId,sub_num_id,stock_id,attributeNum));
-//            }
+            if(conNum[stock_id].ConSumNum % 10000 == 0){
+                logger.info(String.format("total:%d, Client Name:%s, Client Num Id:%d, Sub Stock Id:%d, Attribute Num:%d",
+                        conNum[stock_id].ConSumNum,subId,sub_num_id,stock_id,attributeNum));
+            }
             //insert set
             subSets[stock_id][pivotId][sub_num_id] = new SubSet(attributeNum, subId);
             //insert sub
@@ -328,6 +334,10 @@ public class OpIndex {
 
             AvgMatchTime = (EventNum > MatchWinSize - MatchWinAvgSize) ?
                     AvgMatchTime + per_match_time : AvgMatchTime;
+
+            // send state to influxDB
+            influx.matcherInsert(v.EventProduceTime, per_match_time, per_detain_time);
+
             // dynamic adjust part
             if(EventNum == MatchWinSize) {
                 long adjustTmpTime = System.nanoTime();
@@ -415,6 +425,10 @@ public class OpIndex {
                         ));
                 AvgMatchTime = 0;
                 EventNum = 0;
+
+                // matcher state statistics
+                influx.mactcherStateInsert(MAX_THREAD_NUM, ExpMatchTime, BASE_RATE, LastMatchThread,
+                        AvgMatchTime,CurrentMatchThreadNum);
             }
         });
 

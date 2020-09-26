@@ -85,7 +85,7 @@ public class InfluxdbUtil {
      */
     public void createRetentionPolicy(){
         String command = String.format("CREATE RETENTION POLICY \"%s\" ON \"%s\" DURATION %s REPLICATION %s DEFAULT",
-                "defalut", database, "7d", 1);
+                "defalut", database, "30d", 1);
         this.query(command);
     }
 
@@ -136,16 +136,15 @@ public class InfluxdbUtil {
      * 插入
      * @param EventProduceTime 字段
      */
-    public void matcherInsert(long EventProduceTime, Object EventMatchTime,
-                              Object EventSendTime, long mintime, long maxtime){
+    public void matcherInsert(long EventProduceTime,
+                              Object EventMatchTime,
+                              Object EventSendTime){
         Builder builder = Point.measurement(measurement);
 
         Map<String, Object> fields = new HashMap<String,Object>();
         fields.put("EventProduceTime", EventProduceTime);
         fields.put("EventMatchTime", EventMatchTime);
         fields.put("EventSendTime", EventSendTime);
-        fields.put("MaxThreadExecTime", maxtime);
-        fields.put("MinThreadExecTime", mintime);
 
         builder.fields(fields);
 

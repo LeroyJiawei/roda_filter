@@ -290,7 +290,7 @@ public class TAMA {
             long tmpMatchTime = System.nanoTime() - tmpTime;
             String s = String.valueOf((tmpMatchTime)/1000000.0);
 
-            influx.matcherInsert(v.EventProduceTime,tmpMatchTime, 100,0,0);
+            influx.matcherInsert(v.EventProduceTime,tmpMatchTime, 100);
 
             eventNum++;
             System.out.println(eventNum+ " " + s + " " + matchNum+" " + match_thread_num);

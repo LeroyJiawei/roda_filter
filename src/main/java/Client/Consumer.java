@@ -77,7 +77,7 @@ public class Consumer {
 			System.out.println("Sent subscribe error\n");
 			System.exit(1);
 		}
-		InfluxdbUtil influx = InfluxdbUtil.setUp(influx_filename,"client-test");
+		InfluxdbUtil influx = InfluxdbUtil.setUp(influx_filename,"clientTest");
 
 		//TopicPartition topicPartition = new TopicPartition("", 0);
 

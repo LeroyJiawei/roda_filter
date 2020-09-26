@@ -7,9 +7,9 @@
 <!--		<artifactId>PhSIH-createEvent</artifactId>-->
 <!--		<artifactId>Roda-opSubProducer</artifactId>-->
 <!--		<artifactId>Roda-eventProducer</artifactId>-->
-		<artifactId>Roda-OpIndex</artifactId>
+<!--		<artifactId>Roda-OpIndex</artifactId>-->
 <!--		<artifactId>PhSIH-rein</artifactId>-->
-<!--		<artifactId>PhSIH-infoFeedBack</artifactId>-->
+		<artifactId>Roda-decoder</artifactId>
 <!--		<artifactId>PhSIH-original-rein-dyn</artifactId>-->
 	<version>0.0.1</version>
 	<name>PhSIH</name>
@@ -80,7 +80,8 @@
 					<archive>
 						<manifest>
 							<!-- 主函数的入口 -->
-							<mainClass>core.OpIndex</mainClass>
+<!--							<mainClass>core.OpIndex</mainClass>-->
+							<mainClass>Client.InfoFeedBack</mainClass>
 <!--							<mainClass>EventSender.EventProducer</mainClass>-->
 <!--							<mainClass>Client.creatSub</mainClass>-->
 <!--							<mainClass>Client.opSubProducer</mainClass>-->

@@ -1,10 +1,12 @@
 package Client;
 
+import MySerdes.ValueSerde;
+import Structure.EventStringMatchResult;
+import Structure.EventVal;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import utils.InfluxdbUtil;
 
 import java.io.*;
 import java.util.Collections;
@@ -38,34 +40,26 @@ public class InfoFeedBack {
             System.err.println("properties file read failed");
             e.printStackTrace();
         }
-        String KafkaServer = properties.getProperty("KafkaServer");
-        String securityProto = properties.getProperty("security.protocol");
-        String saslName = properties.getProperty("sasl.kerberos.service.name");
+        String KafkaServer = properties.getProperty("SinkKafkaServer");
+        String influx_filename = properties.getProperty("InfluxdbConfigFile");
+
 
         // define the variable of kafka connection prop
         Properties props = new Properties();
         props.put("bootstrap.servers", KafkaServer);
-        props.put("group.id", "docker-Consumer");
+        props.put("group.id", "decoder-Consumer");
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-//        props.put("value.deserializer", ValueSerde.EventValDeserde.class.getName());
-        props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", ValueSerde.EventStringMatchResultDeserde.class.getName());
 
-        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
-        if(securityProto != null && saslName != null){
-            props.put("security.protocol", securityProto);
-            props.put("sasl.kerberos.service.name", saslName);
-        } else {
-            System.out.println("WARNING: no authentication configuration");
-        }
+
 
         // create consumer
-        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+        KafkaConsumer<String, EventStringMatchResult> consumer = new KafkaConsumer<>(props);
         //creat producer
-        KafkaProducer<String, String> producer = new KafkaProducer<>(props);
 
-        //TopicPartition topicPartition = new TopicPartition("", 0);
+        InfluxdbUtil influx = InfluxdbUtil.setUp(influx_filename,"clientTest");
+
 
         try (consumer) {
             consumer.subscribe(Collections.singletonList("MatchStringResult"));
@@ -80,18 +74,19 @@ public class InfoFeedBack {
             
             // loop to poll events
             while (true) {
-                ConsumerRecords<String, String> records = consumer.poll(70);
+                ConsumerRecords<String, EventStringMatchResult> records = consumer.poll(70);
 
-                for (ConsumerRecord<String, String> record : records) {
-                    // decode to get EventVal object
-                    System.out.println(record.value());
-                    ProducerRecord<String,String> proRecord =
-                            new ProducerRecord<>("MatchStringResult-Another", record.value());
-                    producer.send(proRecord);
+                long tmpArriveTime = System.currentTimeMillis();
+                for (ConsumerRecord<String, EventStringMatchResult> record : records) {
+                    EventVal eVal = record.value().eval;
+                    eVal.EventGetTime = tmpArriveTime;
+
+                    influx.consumerInsert(eVal);
                 }
             }
         } catch (Throwable e) {
-            producer.close();
+            System.out.println("error while consume");
+            e.printStackTrace();
             consumer.close();
             System.exit(1);
         }

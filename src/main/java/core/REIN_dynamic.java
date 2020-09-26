@@ -12,6 +12,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import Structure.EventStringMatchResult;
 import utils.MatchSendStruct;
 import org.apache.commons.lang.StringUtils;
+import utils.InfluxdbUtil;
 
 
 import java.io.*;
@@ -60,6 +61,9 @@ public class REIN_dynamic {
     /* statistic vars */
     private static int SumEventNum = 0;
     private static int EventNum = 0;
+
+    private static InfluxdbUtil influx;
+
 
     //dynamic version rein
     public static void main(String[] args) {
@@ -117,7 +121,7 @@ public class REIN_dynamic {
         Properties ProducerProps =  new Properties();
         ProducerProps.put("bootstrap.servers", KafkaServer);
         ProducerProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        ProducerProps.put("value.serializer", ValueSerde.StringEventMatchSerde.class.getName());
+        ProducerProps.put("value.serializer", ValueSerde.EventStringMatchResultSerde.class.getName());
 
         // security configuration set
         if(securityProto != null && saslName != null){
