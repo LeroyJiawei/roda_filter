@@ -1,6 +1,5 @@
 package core;
 
-import org.apache.kafka.common.metrics.stats.Count;
 import org.apache.log4j.*;
 
 import MySerdes.ValueSerde;
@@ -14,7 +13,6 @@ import org.apache.kafka.streams.kstream.KStream;
 import utils.MatchSendStruct;
 import utils.SendPair;
 
-import javax.swing.undo.CannotUndoException;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Properties;
@@ -386,9 +384,9 @@ public class DaPF_REIN {
                 double min_val = v.subVals.get(i).min_val;
                 double max_val = v.subVals.get(i).max_val;
                 int group = (int)(min_val / GROUP_WIDTH);
-                BucketList[stock_id][attribute_id][0][group].bucket.add(new List(sub_num_id, min_val));
+                BucketList[stock_id][attribute_id][0][group].bucket.add(new StructureList(sub_num_id, min_val));
                 group = (int)(max_val / GROUP_WIDTH);
-                BucketList[stock_id][attribute_id][1][group].bucket.add(new List(sub_num_id, max_val));
+                BucketList[stock_id][attribute_id][1][group].bucket.add(new StructureList(sub_num_id, max_val));
             }
 
             if(SubNum[stock_id] % 10000 == 0){

@@ -223,9 +223,9 @@ public class original_rein_dynamic {
                 double min_val = v.subVals.get(i).min_val;
                 double max_val = v.subVals.get(i).max_val;
                 int group = (int)(min_val / GROUP_WIDTH);
-                bucketlist[stock_id][attribute_id][0][group].bucket.add(new List(sub_num_id, min_val));
+                bucketlist[stock_id][attribute_id][0][group].bucket.add(new StructureList(sub_num_id, min_val));
                 group = (int)(max_val / GROUP_WIDTH);
-                bucketlist[stock_id][attribute_id][1][group].bucket.add(new List(sub_num_id, max_val));
+                bucketlist[stock_id][attribute_id][1][group].bucket.add(new StructureList(sub_num_id, max_val));
             }
             System.out.println(" Client Name: " + subId + " Num Id: " + sub_num_id +
                     " Attribute Num: " + attributeNum);

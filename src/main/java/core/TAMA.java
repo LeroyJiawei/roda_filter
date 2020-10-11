@@ -131,7 +131,7 @@ public class TAMA {
                     double val = this.v.eventVals[i].val;
                     for(int j = 0;j < LEVEL;j++){
                         int t = (int)(val / CELL_WIDTH[j]);
-                        for(List e:bucketlist[stock_id][attribute_id][j][t].bucket){
+                        for(StructureList e:bucketlist[stock_id][attribute_id][j][t].bucket){
                             try{
                                 sets[stock_id][e.Id].sem.acquire(2);
                                 sets[stock_id][e.Id].matched_num++;
@@ -190,12 +190,12 @@ public class TAMA {
                     start = j;
                     if(right - left > 1){
                         if(right - left == 2){
-                            bucketlist[stock_id][attribute_id][j][left + 1].bucket.add(new List(sub_num_id));
+                            bucketlist[stock_id][attribute_id][j][left + 1].bucket.add(new StructureList(sub_num_id));
                             lmark = left + 1;
                             rmark = lmark;
                         }else {
-                            bucketlist[stock_id][attribute_id][j][left + 1].bucket.add(new List(sub_num_id));
-                            bucketlist[stock_id][attribute_id][j][right - 1].bucket.add(new List(sub_num_id));
+                            bucketlist[stock_id][attribute_id][j][left + 1].bucket.add(new StructureList(sub_num_id));
+                            bucketlist[stock_id][attribute_id][j][right - 1].bucket.add(new StructureList(sub_num_id));
                             lmark = left + 1;
                             rmark = right - 1;
                         }
@@ -206,17 +206,17 @@ public class TAMA {
                     int left = (int)(low / CELL_WIDTH[j]);
                     int right = (int)(high / CELL_WIDTH[j]);
                     if(((left + 1 ) / 2) != lmark)
-                        bucketlist[stock_id][attribute_id][j][left + 1].bucket.add(new List(sub_num_id));
+                        bucketlist[stock_id][attribute_id][j][left + 1].bucket.add(new StructureList(sub_num_id));
                     lmark = left + 1;
                     if(((right - 1) / 2) != rmark)
-                        bucketlist[stock_id][attribute_id][j][right - 1].bucket.add(new List(sub_num_id));
+                        bucketlist[stock_id][attribute_id][j][right - 1].bucket.add(new StructureList(sub_num_id));
                     rmark = right - 1;
                 }
                 int left = (int)(low / CELL_WIDTH[LEVEL - 1]);
                 int right = (int)(high / CELL_WIDTH[LEVEL - 1]);
-                bucketlist[stock_id][attribute_id][LEVEL - 1][left].bucket.add(new List(sub_num_id));
+                bucketlist[stock_id][attribute_id][LEVEL - 1][left].bucket.add(new StructureList(sub_num_id));
                 if(left != right)
-                    bucketlist[stock_id][attribute_id][LEVEL - 1][right].bucket.add(new List(sub_num_id));
+                    bucketlist[stock_id][attribute_id][LEVEL - 1][right].bucket.add(new StructureList(sub_num_id));
             }
             SubNum[stock_id]++;
         });

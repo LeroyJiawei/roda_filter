@@ -3,7 +3,7 @@ package Structure;
 import java.util.ArrayList;
 
 public class Bucket {
-	public ArrayList<List> bucket;
+	public ArrayList<StructureList> bucket;
 	public boolean[] bitSet;
 	public int executeNum;
 	public Bucket() {

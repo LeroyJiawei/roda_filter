@@ -29,6 +29,7 @@ public class InfluxdbUtil {
     public InfluxdbUtil(String measurement){
         this.measurement = measurement;
     }
+
     public InfluxdbUtil(String measurement, String measurement2){
         this.measurement = measurement;
         this.measurement2 = measurement2;
@@ -47,25 +48,29 @@ public class InfluxdbUtil {
         return influxDbUtil;
     }
 
-    /**连接时序数据库；获得InfluxDB**/
-    public InfluxDB  influxDbBuild(String config_file){
+    /** 连接时序数据库；获得InfluxDB **/
+    public InfluxDB  influxDbBuild(String addr){
         if(influxDB == null){
             // read influxdb config file
-            Properties properties = new Properties();
-            try {
-                InputStream inputStream = new FileInputStream(new File(config_file));
-                properties.load(inputStream);
-            } catch (FileNotFoundException e) {
-                System.err.println("influx properties file open failed!");
-                e.printStackTrace();
-            } catch (IOException e) {
-                System.err.println("influx properties file read failed");
-                e.printStackTrace();
-            }
-            openurl = properties.getProperty("openurl");
-            username = properties.getProperty("username");
-            password = properties.getProperty("password");
-            database = properties.getProperty("database");
+//            Properties properties = new Properties();
+//            try {
+//                InputStream inputStream = new FileInputStream(new File(config_file));
+//                properties.load(inputStream);
+//            } catch (FileNotFoundException e) {
+//                System.err.println("influx properties file open failed!");
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                System.err.println("influx properties file read failed");
+//                e.printStackTrace();
+//            }
+//            openurl = properties.getProperty("openurl");
+//            username = properties.getProperty("username");
+//            password = properties.getProperty("password");
+//            database = properties.getProperty("database");
+            openurl = addr;
+            username = "lab126";
+            password = "lab126";
+            database = "roda";
 
             influxDB = InfluxDBFactory.connect(openurl, username, password);
 
@@ -104,10 +109,8 @@ public class InfluxdbUtil {
      */
     public void producerInsert(EventVal eVal){
         Builder builder = Point.measurement(measurement);
-
         Map<String, Object> fields = new HashMap<String,Object>();
         fields.put("EventProduceTime", eVal.EventProduceTime);
-
         builder.fields(fields);
 
         influxDB.write(database, "", builder.build());
@@ -119,14 +122,11 @@ public class InfluxdbUtil {
      */
     public void consumerInsert(EventVal eVal){
         Builder builder = Point.measurement(measurement);
-
         Map<String, Object> fields = new HashMap<String,Object>();
-//        fields.put("curSubEventMatchTime", eVal.EventMatchTime);
         fields.put("EventGetTime", eVal.EventGetTime);
         fields.put("EventProduceTime", eVal.EventProduceTime);
         fields.put("EventTotalMatchTime", eVal.EventMatchTime / 1000000.0);
         fields.put("EventDelay", eVal.EventGetTime-eVal.EventProduceTime);
-
         builder.fields(fields);
 
         influxDB.write(database, "", builder.build());
@@ -140,12 +140,10 @@ public class InfluxdbUtil {
                               Object EventMatchTime,
                               Object EventSendTime){
         Builder builder = Point.measurement(measurement);
-
         Map<String, Object> fields = new HashMap<String,Object>();
         fields.put("EventProduceTime", EventProduceTime);
         fields.put("EventMatchTime", EventMatchTime);
         fields.put("EventSendTime", EventSendTime);
-
         builder.fields(fields);
 
         influxDB.write(database, "", builder.build());
@@ -159,7 +157,6 @@ public class InfluxdbUtil {
                                     double AdjustRatio,double  lastMatchThread,
                                     double avgTime, int WorkingThreadNum){
         Builder builder = Point.measurement(measurement2);
-
         Map<String, Object> fields = new HashMap<String,Object>();
         fields.put("MaxThreadNum", MaxThreadNum);
         fields.put("NewThreadNum", WorkingThreadNum);
@@ -167,12 +164,8 @@ public class InfluxdbUtil {
         fields.put("ExpMatchTime", ExpMatchTime);
         fields.put("WinAvgTime", avgTime);
         fields.put("LastThreadNum", lastMatchThread);
-
         builder.fields(fields);
 
         influxDB.write(database, "", builder.build());
     }
-
-
-
 }

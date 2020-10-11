@@ -8,17 +8,20 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.KStream;
 
-import java.io.*;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.apache.log4j.*;
+import org.influxdb.dto.QueryResult;
 import utils.MatchSendStruct;
 import utils.InfluxdbUtil;
 import org.apache.commons.lang.StringUtils;
 
 
 public class OpIndex {
-
     private final static int STOCK_NUM = 2;
     private final static int OP_NUM = 2;
     private final static int MAX_SUB_NUM = 300000;
@@ -32,16 +35,17 @@ public class OpIndex {
     private static MatchSendStruct MatchResultHashBuf;
 
     // adjust variables
-    private static final double BASE_RATE = 0.3;
+    private static  double BASE_RATE = 0.3;
     private static int EventNum = 0;
-    private static final int MatchWinSize = 20;
+    private static  int MatchWinSize = 20;
     private static final int MatchWinAvgSize = 20;
-    private static final int ExpMatchTime = 30;
+    private static  int ExpMatchTime = 30;
     private static boolean adjustSwitch = false;
     private static double LastMatchTime = 0;
     private static int LastMatchThread = 0;
     private static double AvgMatchTime = 0;
 
+    static ReadWriteLock paramRWLock = new ReentrantReadWriteLock();
 
     private static final ConNum[] conNum = new ConNum[STOCK_NUM];
     private static final Bucket[][] ThreadBucket = new Bucket[STOCK_NUM][MAX_THREAD_NUM];
@@ -50,15 +54,29 @@ public class OpIndex {
 
     // main
     public static void main(String[] args) {
+        // kafka cluster connection settings
+        String SinkKafkaServer = "";
+        String SourceKafkaServer = "";
+        String influx_addr = "";
+
         // parse command line arguments
-        if(args.length < 2){
-            System.err.println("Required more arguments\nUsage: java -j OpIndex -configFilePath -maxAttrNum");
+        if(args.length < 4 || args[0].equals("none")||
+                args[1].equals("none") || args[2].equals("none")){
+            System.err.println("Required more arguments\n"+
+                    "Usage: java -j OpIndex -influx_addr -sinkKafka -sourceKafka -maxAttrNum\n"+
+                    "received: ");
+            for(int i=0; i < args.length; i++){
+                System.out.println(args[i]);
+            }
             System.exit(1);
         }
         String configFileName = "";
         try{
-            configFileName = args[0];
-            ATTRIBUTE_NUM = Integer.parseInt(args[2]);
+//            configFileName = args[0];
+            influx_addr = args[0];
+            SinkKafkaServer = args[1];
+            SourceKafkaServer = args[2];
+            ATTRIBUTE_NUM = Integer.parseInt(args[3]);
             indexLists = new Index_Op[STOCK_NUM][ATTRIBUTE_NUM];
         } catch (Throwable e){
             System.err.println("Usage: REIN_dynamic -matchconfigfile -maxattr");
@@ -67,33 +85,31 @@ public class OpIndex {
         }
 
         // read config file
-        Properties properties = new Properties();
-        try {
-            InputStream inputStream = new FileInputStream(new File(configFileName));
-            properties.load(inputStream);
-        } catch (FileNotFoundException e) {
-            System.err.println("properties file open failed!");
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.err.println("properties file read failed");
-            e.printStackTrace();
-        }
+//        Properties properties = new Properties();
+//        try {
+//            InputStream inputStream = new FileInputStream(new File(configFileName));
+//            properties.load(inputStream);
+//        } catch (FileNotFoundException e) {
+//            System.err.println("properties file open failed!");
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            System.err.println("properties file read failed");
+//            e.printStackTrace();
+//        }
 
         // set logger
         Logger logger = Logger.getLogger(OpIndex.class);
-        /** 当构建容器时，注释以下内容**/
-        SimpleLayout layout = new SimpleLayout();
-        try{
-            FileAppender logFileAppender=new FileAppender(layout, properties.getProperty("LogFile"));
-            logger.addAppender(logFileAppender);
-        } catch (Throwable e) {
-            System.err.println("Failed to pen log file!");
-        }
+        /** 当构建容器时，注释以下内容 **/
+//        SimpleLayout layout = new SimpleLayout();
+//        try{
+//            FileAppender logFileAppender=new FileAppender(layout, properties.getProperty("LogFile"));
+//            logger.addAppender(logFileAppender);
+//        } catch (Throwable e) {
+//            System.err.println("Failed to pen log file!");
+//        }
         logger.setLevel(Level.INFO);
 
-        // kafka cluster connection settings
-        String SinkKafkaServer = properties.getProperty("SinkKafkaServer");
-        String SourceKafkaServer = properties.getProperty("SourceKafkaServer");
+
         // stream settings
         Properties props = new Properties();
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
@@ -114,8 +130,8 @@ public class OpIndex {
         KafkaProducer<String, EventStringMatchResult> RodaSender = new KafkaProducer<>(ProducerProps);
 
         // influxdb config
-        String influx_filename = properties.getProperty("InfluxdbConfigFile");
-        influx = InfluxdbUtil.setUp(influx_filename, "matchTime","matcherState");
+//        String influx_filename = properties.getProperty("InfluxdbConfigFile");
+        influx = InfluxdbUtil.setUp(influx_addr, "matchTime","matcherState");
 
         //initialize indexLists
         for(int j = 0; j < STOCK_NUM; j++){
@@ -162,8 +178,6 @@ public class OpIndex {
             }
         }
 
-
-
         // create match thread pool and summary thread pool
         ThreadPoolExecutor executorMatch = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
                 60L, TimeUnit.SECONDS,
@@ -171,6 +185,7 @@ public class OpIndex {
         ThreadPoolExecutor executorSend = new ThreadPoolExecutor(8, 8,
                 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<>());
+
         // parallel model of match
         class Parallel implements Runnable{
             private final int threadIdx;
@@ -196,7 +211,7 @@ public class OpIndex {
                         for(int r = 0; r < attribute_num; r++){
                             double val = this.v.eventVals[r].val;
                             if(indexLists[stock_id][attribute_id].opList.opBuckets[0].bits[r]) {
-                                for (List e : indexLists[stock_id][attribute_id].opList.opBuckets[0].opBucketLists[r].opBucketList) {
+                                for (StructureList e : indexLists[stock_id][attribute_id].opList.opBuckets[0].opBucketLists[r].opBucketStructureList) {
                                     if (e.val <= val) {
                                         try {
                                             subSets[stock_id][attribute_id][e.Id].sem.acquire(2);
@@ -215,7 +230,7 @@ public class OpIndex {
                             }
 
                             if(indexLists[stock_id][attribute_id].opList.opBuckets[1].bits[r]) {
-                                for (List e : indexLists[stock_id][attribute_id].opList.opBuckets[1].opBucketLists[r].opBucketList) {
+                                for (StructureList e : indexLists[stock_id][attribute_id].opList.opBuckets[1].opBucketLists[r].opBucketStructureList) {
                                     if (e.val >= val) {
                                         try {
                                             subSets[stock_id][attribute_id][e.Id].sem.acquire(2);
@@ -242,6 +257,54 @@ public class OpIndex {
             }
         }
 
+        class DynamicParamQuery implements Runnable{
+            @Override
+            public void run() {
+                while(true){
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    QueryResult res = influx.query("SELECT baseRate,expMatchTime,matchWinSize,maxThreads FROM dynamicParams");
+                    if(res.getResults().get(0).getSeries() != null){
+                        for (QueryResult.Series series : res.getResults().get(0).getSeries()){
+                            if (series.getValues() == null) {
+                                logger.error("dynamic query failed");
+                            } else {
+                                List<Object> resList = series.getValues().get(0);
+                                Double tmpRate = (Double)resList.get(1);
+                                Double tmpExpTime = (Double)resList.get(2);
+                                Double tmpMatchWinSize = (Double)resList.get(3);
+                                Double tmpMaxThreads = (Double)resList.get(4);
+
+                                if(tmpRate != BASE_RATE ||
+                                    tmpExpTime.intValue() != ExpMatchTime ||
+                                    tmpMatchWinSize.intValue() != MatchWinSize){
+
+                                    paramRWLock.writeLock().lock();
+
+                                    BASE_RATE = tmpRate;
+                                    ExpMatchTime = tmpExpTime.intValue();
+                                    MatchWinSize = tmpMatchWinSize.intValue();
+
+                                    paramRWLock.writeLock().unlock();
+
+                                    logger.info(String.format("dynamic query params changed to: "+
+                                            "BASE_RATE=%f,ExpMatchTime=%d,MatchWinSize=%d",
+                                            tmpRate,tmpExpTime.intValue(),tmpMatchWinSize.intValue()));
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+        DynamicParamQuery DynamicParamThread = new DynamicParamQuery();
+        new Thread(DynamicParamThread).start();
+
 
         // handle subscription stream
         subscribe.foreach((k,v)->{
@@ -253,11 +316,6 @@ public class OpIndex {
 
             conNum[stock_id].ConSumNum++;
             conNum[stock_id].AttriConNum[pivotId]++;
-
-//            logger.info(String.format("total:%d, Client Name:%s, Client Num Id:%d, " +
-//                            "Sub Stock Id:%d, Attribute Num:%d, apply-time=%d",
-//                    conNum[stock_id].ConSumNum,subId,sub_num_id,
-//                    stock_id,attributeNum,System.currentTimeMillis()-v.generateTime));
 
             if(conNum[stock_id].ConSumNum % 10000 == 0){
                 logger.info(String.format("total:%d, Client Name:%s, Client Num Id:%d, Sub Stock Id:%d, Attribute Num:%d",
@@ -271,9 +329,9 @@ public class OpIndex {
                 indexLists[stock_id][pivotId].opList.opBuckets[0].bits[v.subVals.get(i).attributeId] = true;
                 indexLists[stock_id][pivotId].opList.opBuckets[1].bits[v.subVals.get(i).attributeId] = true;
                 indexLists[stock_id][pivotId].opList.opBuckets[0].opBucketLists[v.subVals.get(i).attributeId].
-                        opBucketList.add(new List(sub_num_id, v.subVals.get(i).min_val));
+                        opBucketStructureList.add(new StructureList(sub_num_id, v.subVals.get(i).min_val));
                 indexLists[stock_id][pivotId].opList.opBuckets[1].opBucketLists[v.subVals.get(i).attributeId].
-                        opBucketList.add(new List(sub_num_id, v.subVals.get(i).max_val));
+                        opBucketStructureList.add(new StructureList(sub_num_id, v.subVals.get(i).max_val));
             }
         });
 
@@ -281,6 +339,8 @@ public class OpIndex {
         // handle event stream
         //matcher
         event.foreach((k, v) -> {
+            paramRWLock.readLock().lock();
+
             int stock_id = v.StockId;
 
             //compute event access delay
@@ -430,6 +490,8 @@ public class OpIndex {
                 influx.mactcherStateInsert(MAX_THREAD_NUM, ExpMatchTime, BASE_RATE, LastMatchThread,
                         AvgMatchTime,CurrentMatchThreadNum);
             }
+
+            paramRWLock.readLock().unlock();
         });
 
         // construct subscribe stream

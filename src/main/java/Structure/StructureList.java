@@ -1,14 +1,14 @@
 package Structure;
 
-public class List {
+public class StructureList {
 	public double val;
 	public int Id;
 	//public int PivotId;
-	public List(int NumId, double value) {
+	public StructureList(int NumId, double value) {
 		this.Id = NumId;
 		this.val = value;
 	}
-	public List(int NumId) {
+	public StructureList(int NumId) {
 		this.Id = NumId;
 	}
 	/*

@@ -31,7 +31,8 @@ public class Index_Op {
         }
     }
     public class OpBucketList{
-        public ArrayList<List> opBucketList;
-        public OpBucketList(){opBucketList = new ArrayList<>();}
+        public ArrayList<StructureList> opBucketStructureList;
+        public OpBucketList(){
+            opBucketStructureList = new ArrayList<>();}
     }
 }

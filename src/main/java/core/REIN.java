@@ -12,9 +12,6 @@ import java.io.*;
 import java.util.Properties;
 import java.util.concurrent.*;
 
-import static java.lang.Math.pow;
-import static java.lang.Math.sqrt;
-
 public class REIN {
     private final static int TPYE_MATCH = 0;
     private final static int TYPE_SEND = 1;
@@ -128,23 +125,23 @@ public class REIN {
                     int attribute_id = this.v.eventVals[i].attributeId;
                     double val = this.v.eventVals[i].val;
                     int group = (int) (val / GROUP_WIDTH);
-                    for (List e : bucketlist[stock_id][attribute_id][1][group].bucket) {
+                    for (StructureList e : bucketlist[stock_id][attribute_id][1][group].bucket) {
                         if (e.val < val) {
                             bitSet[stock_id][e.Id].b = true;
                         }
                     }
                     for (int j = group - 1; j >= 0; j--) {
-                        for (List e : bucketlist[stock_id][attribute_id][1][j].bucket) {
+                        for (StructureList e : bucketlist[stock_id][attribute_id][1][j].bucket) {
                             bitSet[stock_id][e.Id].b = true;
                         }
                     }
-                    for (List e : bucketlist[stock_id][attribute_id][0][group].bucket) {
+                    for (StructureList e : bucketlist[stock_id][attribute_id][0][group].bucket) {
                         if (e.val > val) {
                             bitSet[stock_id][e.Id].b = true;
                         }
                     }
                     for (int j = group + 1; j < PART; j++) {
-                        for (List e : bucketlist[stock_id][attribute_id][0][j].bucket) {
+                        for (StructureList e : bucketlist[stock_id][attribute_id][0][j].bucket) {
                             bitSet[stock_id][e.Id].b = true;
                         }
                     }
@@ -211,9 +208,9 @@ public class REIN {
                 double max_val = v.subVals.get(i).max_val;
                 //System.out.println("Attribute Id: " + attribute_id + " Lower Limit: " + min_val + " Hight Limit: " + max_val);
                 int group = (int)(min_val / GROUP_WIDTH);
-                bucketlist[stock_id][attribute_id][0][group].bucket.add(new List(sub_num_id, min_val));
+                bucketlist[stock_id][attribute_id][0][group].bucket.add(new StructureList(sub_num_id, min_val));
                 group = (int)(max_val / GROUP_WIDTH);
-                bucketlist[stock_id][attribute_id][1][group].bucket.add(new List(sub_num_id, max_val));
+                bucketlist[stock_id][attribute_id][1][group].bucket.add(new StructureList(sub_num_id, max_val));
             }
 
             System.out.println(" Client Name: " + subId + " Num Id: " + sub_num_id +
